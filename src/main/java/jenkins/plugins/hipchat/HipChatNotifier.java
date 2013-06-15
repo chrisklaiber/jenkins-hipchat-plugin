@@ -50,21 +50,6 @@ public class HipChatNotifier extends Notifier {
         return sendAs;
     }
 
-    public void setBuildServerUrl(final String buildServerUrl) {
-        this.buildServerUrl = buildServerUrl;
-    }
-
-    public void setAuthToken(final String authToken) {
-        this.authToken = authToken;
-    }
-
-    public void setRoom(final String room) {
-        this.room = room;
-    }
-
-    public void setSendAs(final String sendAs) {
-        this.sendAs = sendAs;
-    }
 
     @DataBoundConstructor
     public HipChatNotifier(final String authToken, final String room, String buildServerUrl, final String sendAs) {
@@ -168,10 +153,18 @@ public class HipChatNotifier extends Notifier {
         private boolean notifyNotBuilt;
         private boolean notifyUnstable;
         private boolean notifyFailure;
+        private boolean notifyBackToNormal;
 
 
         @DataBoundConstructor
-        public HipChatJobProperty(String room, boolean startNotification, boolean notifyAborted, boolean notifyFailure, boolean notifyNotBuilt, boolean notifySuccess, boolean notifyUnstable) {
+        public HipChatJobProperty(String room,
+                                  boolean startNotification,
+                                  boolean notifyAborted,
+                                  boolean notifyFailure,
+                                  boolean notifyNotBuilt,
+                                  boolean notifySuccess,
+                                  boolean notifyUnstable,
+                                  boolean notifyBackToNormal) {
             this.room = room;
             this.startNotification = startNotification;
             this.notifyAborted = notifyAborted;
@@ -179,6 +172,7 @@ public class HipChatNotifier extends Notifier {
             this.notifyNotBuilt = notifyNotBuilt;
             this.notifySuccess = notifySuccess;
             this.notifyUnstable = notifyUnstable;
+            this.notifyBackToNormal = notifyBackToNormal;
         }
 
         @Exported
@@ -230,6 +224,11 @@ public class HipChatNotifier extends Notifier {
             return notifyUnstable;
         }
 
+        @Exported
+        public boolean getNotifyBackToNormal() {
+            return notifyBackToNormal;
+        }
+
         @Extension
         public static final class DescriptorImpl extends JobPropertyDescriptor {
             public String getDisplayName() {
@@ -249,7 +248,8 @@ public class HipChatNotifier extends Notifier {
                         sr.getParameter("hipChatNotifyFailure") != null,
                         sr.getParameter("hipChatNotifyNotBuilt") != null,
                         sr.getParameter("hipChatNotifySuccess") != null,
-                        sr.getParameter("hipChatNotifyUnstable") != null);
+                        sr.getParameter("hipChatNotifyUnstable") != null,
+                        sr.getParameter("hipChatNotifyBackToNormal") != null);
             }
         }
     }
