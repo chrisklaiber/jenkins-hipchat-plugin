@@ -35,15 +35,18 @@ public class ActiveNotifier implements FineGrainedNotifier {
     }
 
     public void started(AbstractBuild build) {
-        String changes = getChanges(build);
+        // TODO(chris): we've overridden the usual build messages for
+        // Khan Academy usage, since the way changes are determined
+        // can often be confusing to users of the build system,
+        // particularly with all the merging we are doing for
+        // deployments. There's certainly a better way to design this
+        // for generalized use.
         CauseAction cause = build.getAction(CauseAction.class);
 
-        if (changes != null) {
-            notifyStart(build, changes);
-        } else if (cause != null) {
+        if (cause != null) {
             MessageBuilder message = new MessageBuilder(notifier, build);
             message.append(cause.getShortDescription());
-            notifyStart(build, message.appendOpenLink().toString());
+            notifyStart(build, message.appendConsoleLink().toString());
         } else {
             notifyStart(build, getBuildStatusMessage(build));
         }
@@ -72,37 +75,6 @@ public class ActiveNotifier implements FineGrainedNotifier {
         }
     }
 
-    String getChanges(AbstractBuild r) {
-        if (!r.hasChangeSetComputed()) {
-            logger.info("No change set computed...");
-            return null;
-        }
-        ChangeLogSet changeSet = r.getChangeSet();
-        List<Entry> entries = new LinkedList<Entry>();
-        Set<AffectedFile> files = new HashSet<AffectedFile>();
-        for (Object o : changeSet.getItems()) {
-            Entry entry = (Entry) o;
-            logger.info("Entry " + o);
-            entries.add(entry);
-            files.addAll(entry.getAffectedFiles());
-        }
-        if (entries.isEmpty()) {
-            logger.info("Empty change...");
-            return null;
-        }
-        Set<String> authors = new HashSet<String>();
-        for (Entry entry : entries) {
-            authors.add(entry.getAuthor().getDisplayName());
-        }
-        MessageBuilder message = new MessageBuilder(notifier, r);
-        message.append("Started by changes from ");
-        message.append(StringUtils.join(authors, ", "));
-        message.append(" (");
-        message.append(files.size());
-        message.append(" file(s) changed)");
-        return message.appendOpenLink().toString();
-    }
-
     static String getBuildColor(AbstractBuild r) {
         Result result = r.getResult();
         if (result == Result.SUCCESS) {
@@ -118,7 +90,7 @@ public class ActiveNotifier implements FineGrainedNotifier {
         MessageBuilder message = new MessageBuilder(notifier, r);
         message.appendStatusMessage();
         message.appendDuration();
-        return message.appendOpenLink().toString();
+        return message.appendConsoleLink().toString();
     }
 
     public static class MessageBuilder {
@@ -165,16 +137,23 @@ public class ActiveNotifier implements FineGrainedNotifier {
         }
 
         private MessageBuilder startMessage() {
+            String url = notifier.getBuildServerUrl() + build.getUrl();
             message.append(build.getProject().getDisplayName());
-            message.append(" - ");
+            message.append(" - <a href='").append(url).append("'>");
             message.append(build.getDisplayName());
-            message.append(" ");
+            message.append("</a> ");
             return this;
         }
 
         public MessageBuilder appendOpenLink() {
             String url = notifier.getBuildServerUrl() + build.getUrl();
             message.append(" (<a href='").append(url).append("'>Open</a>)");
+            return this;
+        }
+
+        public MessageBuilder appendConsoleLink() {
+            String url = notifier.getBuildServerUrl() + build.getUrl() + "console";
+            message.append(" (<a href='").append(url).append("'>Console Output</a>)");
             return this;
         }
 
